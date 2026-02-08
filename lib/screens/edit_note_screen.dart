@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:notes_app/main.dart';
 import 'package:notes_app/models/note.dart';
@@ -11,79 +9,102 @@ class EditNoteScreen extends StatelessWidget {
 
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
-  Note? note;
 
-  final isCheked = false.obs;
-
-  @override
-  void dispose() {
-    titleController.dispose();
-    descriptionController.dispose();
-  }
+  final isLocationEnabled = false.obs;
 
   @override
   Widget build(BuildContext context) {
-    note = Get.arguments;
-    titleController.text = note!.title;
-    descriptionController.text = note!.description;
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Edit Note')),
-        body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 16,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  hintText: 'Title',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              TextField(
-                maxLines: 5,
-                controller: descriptionController,
-                decoration: const InputDecoration(
-                  hintText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              // make checkbox to get the current location
-              Obx(
-                () => CheckboxListTile(
-                  // add icon like location
-                  secondary: const Icon(Icons.location_on),
+    final Note note = Get.arguments;
 
-                  title: const Text('Get Current Location'),
-                  value: isCheked.value,
-                  onChanged: (value) async {
-                    isCheked.value = value!;
-                    if (isCheked.value) {
-                      isCheked.value = value;
-                    }
-                  },
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  // save the note to the database
-                  note!.title = titleController.text;
-                  note!.description = descriptionController.text;
-                  await database.noteDao.updateNote(note!);
+    titleController.text = note.title;
+    descriptionController.text = note.description;
 
-                  Get.offAll(
-                    () => HomeScreen(),
-                    // arguments: {'note': note, 'isChacked': isCheked.value},
-                    arguments: [isCheked.value, note!.id],
-                  );
+    return Scaffold(
+      appBar: AppBar(title: const Text('Edit Note')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            /// TITLE
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                prefixIcon: Icon(Icons.title),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            /// DESCRIPTION
+            TextField(
+              controller: descriptionController,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                prefixIcon: Icon(Icons.note),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            /// LOCATION SWITCH
+            Obx(
+              () => SwitchListTile(
+                title: const Text('Update current location'),
+                subtitle: const Text(
+                  'Attach your current location to this note',
+                ),
+                value: isLocationEnabled.value,
+                onChanged: (value) {
+                  isLocationEnabled.value = value;
                 },
-                child: const Text('Save Changes'),
+                secondary: const Icon(Icons.location_on),
               ),
-            ],
-          ),
+            ),
+
+            const Spacer(),
+
+            /// ACTION BUTTONS
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Get.back();
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    icon: const Icon(Icons.save),
+                    label: const Text('Save Changes'),
+                    onPressed: () async {
+                      if (titleController.text.trim().isEmpty) {
+                        Get.snackbar(
+                          'Validation Error',
+                          'Title cannot be empty',
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                        return;
+                      }
+
+                      note.title = titleController.text.trim();
+                      note.description = descriptionController.text.trim();
+
+                      await database.noteDao.updateNote(note);
+
+                      Get.offAll(
+                        () => HomeScreen(),
+                        arguments: [isLocationEnabled.value, note.id],
+                        transition: Transition.rightToLeftWithFade,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
