@@ -23,6 +23,10 @@ A modern and user-friendly **Notes Application** built with **Flutter** and **SQ
 
 ## 🎥 Demo Video
 
+
+https://github.com/user-attachments/assets/3007c879-fc58-45ef-b380-3667cf6c7d48
+
+
 👉 *A short demo video showcasing the app features will be added here.*
 
 ---
